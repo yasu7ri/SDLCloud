@@ -195,3 +195,9 @@ myRef.setValue(sdl);
 ```
   * vinは取れないらしいので固定
   * 注意事項としては、定期受信したいデータを設定も値が変わったモノしか送られてこず変わらないものはnullになっているので受取って処理するときにはnullチェックが必須になるようです
+
+
+
+
+## 参考
+* [【Android】Manifest merger failedとかいうエラーの解消法](https://kurutabrog.hatenablog.com/entry/2019/05/04/133140)
