@@ -193,3 +193,5 @@ sdl.setCalegory("1");
 DatabaseReference myRef = database.getReference(d.toString() + "/");
 myRef.setValue(sdl);
 ```
+  * vinは取れないらしいので固定
+  * 注意事項としては、定期受信したいデータを設定も値が変わったモノしか送られてこず変わらないものはnullになっているので受取って処理するときにはnullチェックが必須になるようです
