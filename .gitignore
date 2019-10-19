@@ -7,3 +7,5 @@
 .idea/**/shelf
 
 .gradle/**/*
+
+app/google-services.json
