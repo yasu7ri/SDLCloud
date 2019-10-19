@@ -11,7 +11,7 @@
     ```
 * [Manticore](https://www.smartdevicelink.com/resources/manticore/)へログインしてManticoreを起動させる
 * 右側に表示されているPORT NUMBERをcom.oec.sdl.cloud.SdlServiceの68ステップ目に書かれている`TCP_PORT`へ記述する
-    ```
+    ``` java
     private static final int TCP_PORT = 14385;
     ```
 * 起動する
@@ -31,7 +31,7 @@
     * 設定ファイルのダウンロードをして google-services.json ファイルを Android アプリ モジュールの ルート ディレクトリへ配置する
 * Firebase SDK の追加
   * プロジェクト レベルの build.gradle（<project>/build.gradle）
-    ```
+    ``` yml
     buildscript {    
         repositories {
             google()
@@ -53,7 +53,7 @@
     }
     ```
   * アプリレベルの build.gradle（<project>/<app-module>/build.gradle）
-    ```
+    ``` yml
     apply plugin: 'com.android.application'
     apply plugin: 'com.google.gms.google-services'
 
@@ -138,6 +138,57 @@
 ### データベースの作成
 * セキュリティは、とりあえずテストモードで開始
 * 今回は`Cloud Firestore`でなく`Realtime Database`を選択する
+* ルールもとりあえず全公開
+  ```
+  {
+    /* Visit https://firebase.google.com/docs/database/security to learn more about security rules. */
+    "rules": {
+        ".read": true,
+        ".write": true
+    }
+  }
+  ```
 
 ### Manticoreから取得したデータをfirebaseへ登録する
+* 定期受信したいデータを設定する<br>
+`com.smartdevicelink.managers.CompletionListener#onComplete(boolean success) `
+    ``` java
+    subscribeRequest.setRpm(true);                          //エンジン回転数
+    subscribeRequest.setPrndl(true);                        //シフトレーバの状態
+    subscribeRequest.setSpeed(true);
+    subscribeRequest.setGps(true);
+    ```
+* Manticoreから取得したデータをfirebaseへ登録する
+`com.smartdevicelink.managers.SdlManagerListener#onStart()`
+``` java
+//FIXME POSTするURLを書いてね
+//doPost("https://ドメイン",onVehicleDataNotification.getRpm().toString());
+Double speed = onVehicleDataNotification.getSpeed();
+// GPS
+GPSData gpsData = onVehicleDataNotification.getGps();
+// 緯度
+Double latitudeDegrees = Double.valueOf(0);
+// 経度
+Double longitudeDegrees = Double.valueOf(0);
 
+if (gpsData != null) {
+    // 待避
+    beforeGpsData = gpsData;
+    // 緯度
+    latitudeDegrees = gpsData.getLatitudeDegrees();
+    // 経度
+    longitudeDegrees = gpsData.getLongitudeDegrees();
+}
+//System.out.println("--- rpm : " + rpm);
+FirebaseDatabase database = FirebaseDatabase.getInstance();
+Date d = new Date();
+
+Sdl sdl = new Sdl();
+sdl.setVin("vin99999");
+sdl.setSpeed(speed);
+sdl.setGps(String.format("[%s, %s]", latitudeDegrees.toString(), longitudeDegrees.toString()));
+sdl.setCalegory("1");
+
+DatabaseReference myRef = database.getReference(d.toString() + "/");
+myRef.setValue(sdl);
+```
