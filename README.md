@@ -1,5 +1,6 @@
 # SDLCloud
-[ハッカソンでアプリ作って、SDL（スマート・デバイス・リンク）アプリコンテスト2019に応募しよう！](https://hmcn.connpass.com/event/143901/)のサンプルアプリ[SDLCloud](https://github.com/oic0310/SDLCloud)を元に[Manticore](https://www.smartdevicelink.com/resources/manticore/)から取得してたデータをfirebaseへ保存する
+[ハッカソンでアプリ作って、SDL（スマート・デバイス・リンク）アプリコンテスト2019に応募しよう！](https://hmcn.connpass.com/event/143901/)のサンプルアプリ[SDLCloud](https://github.com/oic0310/SDLCloud)を元に[Manticore](https://www.smartdevicelink.com/resources/manticore/)から取得してたデータをfirebaseへ保存するまでの適当なプログラム<br>
+適当なので良い子はマネしないでねｗ
 
 ## まずば素のサンプルをSDLCloudを動かくまで
 * [SDLCloud](https://github.com/oic0310/SDLCloud)をcloneする
