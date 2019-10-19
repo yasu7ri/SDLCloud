@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.IBinder;
 import android.util.Log;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.smartdevicelink.managers.CompletionListener;
 import com.smartdevicelink.managers.SdlManager;
 import com.smartdevicelink.managers.SdlManagerListener;
@@ -21,6 +23,7 @@ import com.smartdevicelink.protocol.enums.FunctionID;
 import com.smartdevicelink.proxy.RPCNotification;
 import com.smartdevicelink.proxy.RPCResponse;
 import com.smartdevicelink.proxy.rpc.DisplayCapabilities;
+import com.smartdevicelink.proxy.rpc.GPSData;
 import com.smartdevicelink.proxy.rpc.GetVehicleData;
 import com.smartdevicelink.proxy.rpc.GetVehicleDataResponse;
 import com.smartdevicelink.proxy.rpc.OnHMIStatus;
@@ -40,6 +43,7 @@ import com.smartdevicelink.transport.TCPTransportConfig;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
@@ -52,6 +56,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class SdlService extends Service {
+	private GPSData beforeGpsData;
+	private Double beforeSpeed;
 
 	private static final String TAG 					= "SDL Vehicle";
 
@@ -65,7 +71,7 @@ public class SdlService extends Service {
 	// TCP/IP transport config
 	// The default port is 12345
 	// The IP is of the machine that is running SDL Core
-	private static final int TCP_PORT = 14385;
+	private static final int TCP_PORT = 10261;
 	private static final String DEV_MACHINE_IP_ADDRESS = "m.sdl.tools";
 
 	// variable to create and call functions of the SyncProxy
@@ -233,8 +239,36 @@ public class SdlService extends Service {
                             //エンジン回転数を指定URLにHTTP POSTする
 							try {
 								//FIXME POSTするURLを書いてね
-								doPost("https://ドメイン",onVehicleDataNotification.getRpm().toString());
-							} catch (IOException e) {
+								//doPost("https://ドメイン",onVehicleDataNotification.getRpm().toString());
+								Double speed = onVehicleDataNotification.getSpeed();
+								// GPS
+								GPSData gpsData = onVehicleDataNotification.getGps();
+								// 緯度
+								Double latitudeDegrees = Double.valueOf(0);
+								// 経度
+								Double longitudeDegrees = Double.valueOf(0);
+
+								if (gpsData != null) {
+									// 待避
+									beforeGpsData = gpsData;
+									// 緯度
+									latitudeDegrees = gpsData.getLatitudeDegrees();
+									// 経度
+									longitudeDegrees = gpsData.getLongitudeDegrees();
+								}
+								//System.out.println("--- rpm : " + rpm);
+								FirebaseDatabase database = FirebaseDatabase.getInstance();
+								Date d = new Date();
+
+								Sdl sdl = new Sdl();
+								sdl.setVin("vin99999");
+								sdl.setSpeed(speed);
+								sdl.setGps(String.format("[%s, %s]", latitudeDegrees.toString(), longitudeDegrees.toString()));
+								sdl.setCalegory("1");
+
+								DatabaseReference myRef = database.getReference(d.toString() + "/");
+								myRef.setValue(sdl);
+							} catch (Exception e) {
 								//FIXME ちゃんとエラー処理してね
 								e.printStackTrace();
 							}
@@ -429,7 +463,9 @@ public class SdlService extends Service {
                     SubscribeVehicleData subscribeRequest = new SubscribeVehicleData();
                     subscribeRequest.setRpm(true);                          //エンジン回転数
                     subscribeRequest.setPrndl(true);                        //シフトレーバの状態
-                    subscribeRequest.setOnRPCResponseListener(new OnRPCResponseListener() {
+					subscribeRequest.setSpeed(true);
+					subscribeRequest.setGps(true);
+					subscribeRequest.setOnRPCResponseListener(new OnRPCResponseListener() {
                         @Override
                         public void onResponse(int correlationId, RPCResponse response) {
                             if (response.getSuccess()) {
@@ -446,4 +482,42 @@ public class SdlService extends Service {
 		});
 	}
 
+	private static class Sdl {
+		private String gps;
+		private String vin;
+		private Double speed;
+		private String calegory;
+
+		public String getGps() {
+			return gps;
+		}
+
+		public void setGps(String gps) {
+			this.gps = gps;
+		}
+
+		public String getVin() {
+			return vin;
+		}
+
+		public void setVin(String vin) {
+			this.vin = vin;
+		}
+
+		public Double getSpeed() {
+			return speed;
+		}
+
+		public void setSpeed(Double speed) {
+			this.speed = speed;
+		}
+
+		public String getCalegory() {
+			return calegory;
+		}
+
+		public void setCalegory(String calegory) {
+			this.calegory = calegory;
+		}
+	}
 }
